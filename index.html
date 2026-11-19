@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>しーちゃん占い</title>
+<meta name="theme-color" content="#5b2a86">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="しーちゃん占い">
+<style>
+:root{--gold:#ffd23f;--red:#e63946;--navy:#23164a;--ink:#2b1d0e}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
+html,body{margin:0;height:100%}
+body{font-family:"Hiragino Maru Gothic ProN","Hiragino Sans","Yu Gothic",system-ui,sans-serif;color:var(--ink);
+ background:linear-gradient(170deg,#3a1460 0%,#7b2a86 35%,#e8577a 70%,#ffb347 100%) fixed;overflow-x:hidden}
+#sky{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.star{position:absolute;width:4px;height:4px;border-radius:50%;background:#fff;animation:tw 2.4s infinite alternate}
+@keyframes tw{from{opacity:.15;transform:scale(.6)}to{opacity:1;transform:scale(1.3)}}
+.petal{position:absolute;top:-40px;font-size:22px;animation:fall linear infinite;opacity:.85}
+@keyframes fall{to{transform:translateY(115vh) rotate(540deg)}}
+.screen{position:relative;z-index:1;display:none;min-height:100%;padding:calc(env(safe-area-inset-top) + 10px) 12px calc(env(safe-area-inset-bottom) + 20px)}
+.screen.on{display:block}
+button{font-family:inherit;border:none;cursor:pointer;transition:transform .08s,filter .08s,box-shadow .08s}
+button:active,.press:active{transform:translateY(3px) scale(.95);filter:brightness(.82)}
+/* ---------- home ---------- */
+.hero{display:flex;align-items:flex-end;gap:8px;margin-top:4px}
+.hero img{width:118px;flex:none;animation:bob 2.2s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-6px) rotate(-2deg)}}
+.bubble{position:relative;background:#fff;border-radius:18px;padding:10px 12px;font-size:15px;line-height:1.5;font-weight:700;box-shadow:0 4px 0 rgba(0,0,0,.18);flex:1;margin-bottom:22px}
+.bubble:after{content:"";position:absolute;left:-10px;bottom:16px;border:10px solid transparent;border-right-color:#fff;border-left:0}
+h1{margin:6px 0 0;text-align:center;font-size:30px;color:#fff;letter-spacing:2px;text-shadow:0 3px 0 #b8336a,0 0 14px rgba(255,210,63,.9)}
+h1 small{display:block;font-size:13px;letter-spacing:1px;color:var(--gold);text-shadow:none}
+.banner{margin:14px 0 10px;background:#4a4a4f;border-radius:14px;padding:8px;text-align:center;box-shadow:0 4px 0 rgba(0,0,0,.25)}
+.banner img{width:100%;max-width:520px;border-radius:8px;display:block;margin:0 auto}
+.banner .addr{color:#fff;font-size:12px;margin-top:6px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.card{background:linear-gradient(180deg,#fff 0%,#fff6d8 100%);border-radius:20px;padding:8px 6px 10px;box-shadow:0 5px 0 #c9852c,0 0 0 3px var(--gold) inset;text-align:center;position:relative}
+.card img{width:100%;height:120px;object-fit:contain;pointer-events:none}
+.card b{display:block;font-size:16px;margin-top:4px}
+.card span{display:block;font-size:11px;color:#7a5a2a;margin-top:2px;min-height:15px}
+.foot{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.btn{background:var(--gold);color:var(--ink);font-weight:800;font-size:16px;border-radius:16px;padding:14px 10px;box-shadow:0 5px 0 #b8860b;width:100%}
+.btn.pink{background:#ff7aa8;color:#fff;box-shadow:0 5px 0 #b8336a}
+.btn.blue{background:#3a86ff;color:#fff;box-shadow:0 5px 0 #1d4fb0}
+.btn.white{background:#fff;box-shadow:0 5px 0 #aaa}
+.ver{text-align:center;color:#fff;font-size:12px;margin-top:14px;opacity:.9}
+/* ---------- play ---------- */
+.top{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.back{background:#fff;border-radius:14px;padding:10px 14px;font-weight:800;font-size:15px;box-shadow:0 4px 0 #999;flex:none}
+.top h2{margin:0;color:#fff;font-size:20px;text-shadow:0 2px 0 #b8336a;flex:1;text-align:center;padding-right:60px}
+.say{position:relative;display:flex;align-items:flex-start;gap:6px;margin:4px 0 8px}
+.say img{width:92px;flex:none}
+.say .bubble{margin:8px 0 0;font-size:16px}
+.stage{position:relative;background:rgba(255,255,255,.16);border:3px solid rgba(255,255,255,.55);border-radius:24px;height:min(62vh,500px);touch-action:none;overflow:hidden}
+.hint{position:absolute;z-index:20;left:0;right:0;bottom:10px;text-align:center;color:#fff;font-weight:800;font-size:16px;text-shadow:0 2px 3px rgba(0,0,0,.5);pointer-events:none}
+.meter{position:absolute;left:14px;right:14px;top:12px;height:14px;background:rgba(0,0,0,.25);border-radius:9px;overflow:hidden;pointer-events:none}
+.meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ff7aa8,#ffd23f);border-radius:9px;transition:width .1s}
+/* omikuji */
+.tube{position:absolute;left:50%;top:50%;width:110px;height:230px;margin:-100px 0 0 -55px;border-radius:14px;background:repeating-linear-gradient(90deg,#c58a4b 0 18px,#b0763a 18px 22px);box-shadow:inset 0 0 0 4px #7a4a1c,0 8px 0 rgba(0,0,0,.25)}
+.tube:before{content:"";position:absolute;left:30px;top:-8px;width:50px;height:16px;border-radius:50%;background:#3b2210}
+.tube .lab{position:absolute;left:50%;top:60px;transform:translateX(-50%);background:#fff;border:2px solid var(--red);color:var(--red);font-weight:900;writing-mode:vertical-rl;padding:8px 4px;font-size:20px;border-radius:4px}
+.stick{position:absolute;width:16px;border-radius:4px;background:linear-gradient(90deg,#e9c88a,#d4a95c);box-shadow:inset 0 0 0 2px #9b7434}
+.stick em{position:absolute;left:0;right:0;top:6px;font-style:normal;font-size:11px;font-weight:900;color:var(--red);writing-mode:vertical-rl;text-align:center;line-height:16px}
+/* amida */
+.amida{position:absolute;inset:0}
+.stage .lbl,.stage .st{position:absolute;width:30px;margin-left:-15px;text-align:center;font-weight:900;border-radius:8px}
+.stage .lbl{top:8px;padding:4px 0;font-size:13px;background:#fff;writing-mode:vertical-rl;text-orientation:upright;height:56px;line-height:30px;overflow:hidden}
+.stage .st{bottom:8px;height:40px;line-height:40px;background:var(--gold);box-shadow:0 4px 0 #b8860b;font-size:16px}
+.cheer{position:absolute;right:4px;width:96px;bottom:56px;pointer-events:none;display:none}
+.flagtxt{position:absolute;font-weight:900;color:var(--red);transform:rotate(-6deg);pointer-events:none;white-space:nowrap}
+/* fukubiki / gacha */
+.legend{position:absolute;left:10px;top:34px;background:#fff;border-radius:12px;padding:6px 8px;font-size:12px;font-weight:700;line-height:1.55;pointer-events:none}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:50%;vertical-align:-1px;margin-right:4px;border:1px solid #0003}
+.ball{position:absolute;width:44px;height:44px;border-radius:50%;box-shadow:inset -6px -6px 0 rgba(0,0,0,.18),inset 5px 5px 0 rgba(255,255,255,.5),0 4px 6px rgba(0,0,0,.3)}
+/* petals */
+.flypetal{position:absolute;font-weight:900;font-size:18px;color:#fff;text-shadow:0 2px 3px #000;pointer-events:none;transition:transform 1s ease-out,opacity 1s}
+/* ---------- result ---------- */
+#result{background:rgba(25,10,40,.55)}
+.rcard{position:relative;background:linear-gradient(180deg,#fffdf4,#ffeec2);border-radius:26px;padding:16px 16px 18px;box-shadow:0 0 0 4px var(--gold) inset,0 8px 0 rgba(0,0,0,.25);margin-top:6px}
+.badge{position:absolute;right:12px;top:12px;background:#5b2a86;color:#fff;font-size:12px;font-weight:800;padding:4px 10px;border-radius:20px}
+.rimg{display:block;width:62%;max-width:260px;margin:22px auto 0;animation:pop .6s cubic-bezier(.3,1.6,.6,1)}
+@keyframes pop{from{transform:scale(.3);opacity:0}}
+.rlevel{text-align:center;font-size:58px;font-weight:900;margin:6px 0 2px;letter-spacing:4px;animation:pop .7s .15s cubic-bezier(.3,1.6,.6,1) both}
+.rkind{text-align:center;font-size:13px;color:#7a5a2a;font-weight:700}
+.rtext{font-size:17px;line-height:1.75;margin:12px 0;font-weight:600}
+.lucky{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px}
+.lucky div{background:#fff;border-radius:14px;padding:8px;text-align:center;font-size:14px;font-weight:700;box-shadow:0 3px 0 #e2c27a}
+.lucky small{display:block;font-size:11px;color:#a07a3a}
+.rbtns{display:grid;gap:10px;margin-top:14px}
+/* ---------- modal ---------- */
+.modal{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.65);display:none;align-items:center;justify-content:center;padding:18px}
+.modal.on{display:flex}
+.mbox{background:#fff;border-radius:22px;padding:16px;max-width:520px;width:100%;max-height:88vh;overflow:auto;text-align:center}
+.mbox img{max-width:100%;border-radius:12px}
+.mbox p{font-size:16px;line-height:1.6;font-weight:700}
+#notice .mbox{border:4px solid var(--red)}
+#notice p{color:var(--red);font-size:19px}
+.hist{list-style:none;padding:0;margin:8px 0;text-align:left;font-size:15px}
+.hist li{padding:8px 4px;border-bottom:1px dashed #ddd;display:flex;gap:8px}
+.hist li b{min-width:64px}
+</style>
+</head>
+<body>
+<div id="sky"></div>
+
+<!-- HOME -->
+<section id="home" class="screen on">
+ <h1 data-t="title">しーちゃん占い<small data-t="sub">8つの占いで遊ぼう！</small></h1>
+ <div class="hero">
+  <img src="img/guide.webp" alt="">
+  <div class="bubble" data-t="welcome">はいさい！占いをえらんでね。何回でもできるよ〜</div>
+ </div>
+ <div class="banner" id="banner">
+  <img src="img/logo.webp" alt="MIRATERIA">
+  <div class="addr" data-t="addr">沖縄県島尻郡八重瀬町長毛379-3</div>
+ </div>
+ <div class="grid" id="grid"></div>
+ <div class="foot">
+  <button class="btn white" id="bHist" data-t="hist">これまでの結果</button>
+  <button class="btn blue" id="bHow" data-t="how">ホーム画面に追加する方法</button>
+  <button class="btn pink" id="bInsta" data-t="insta">インスタを見る</button>
+  <button class="btn white" id="bShot" data-t="shot">画面全体を画像で保存</button>
+ </div>
+ <div class="ver" id="ver"></div>
+</section>
+
+<!-- PLAY -->
+<section id="play" class="screen">
+ <div class="top"><button class="back" id="bBack" data-t="back">← もどる</button><h2 id="pTitle"></h2></div>
+ <div class="say"><img id="pImg" alt=""><div class="bubble" id="pSay"></div></div>
+ <div class="stage" id="stage"></div>
+</section>
+
+<!-- RESULT -->
+<section id="result" class="screen">
+ <div class="rcard" id="rcard">
+  <div class="badge" data-t="badge">アプリ占い</div>
+  <img class="rimg" id="rImg" alt="">
+  <div class="rlevel" id="rLevel"></div>
+  <div class="rkind" id="rKind"></div>
+  <div class="rtext" id="rText"></div>
+  <div class="lucky">
+   <div><small data-t="litem">ラッキーアイテム</small><span id="rItem"></span></div>
+   <div><small data-t="lcolor">ラッキーカラー</small><span id="rColor"></span></div>
+  </div>
+ </div>
+ <div class="rbtns">
+  <button class="btn" id="bAgain" data-t="again">もう一回占う</button>
+  <button class="btn pink" id="bSave" data-t="save">結果を画像で保存</button>
+  <button class="btn white" id="bHome" data-t="home">占いえらびにもどる</button>
+ </div>
+</section>
+
+<div class="modal" id="mHow"><div class="mbox"><img src="img/howto.webp" alt=""><p data-t="android">Androidの人は「Chrome」で開いてね</p><button class="btn" data-close data-t="close">とじる</button></div></div>
+<div class="modal" id="mHist"><div class="mbox"><p data-t="hist">これまでの結果</p><ul class="hist" id="histList"></ul><button class="btn" data-close data-t="close">とじる</button></div></div>
+<div class="modal" id="mImg"><div class="mbox"><p data-t="longpress">画像を長押しして保存してね</p><img id="mImgEl" alt=""><br><br><button class="btn" data-close data-t="close">とじる</button></div></div>
+<div class="modal" id="notice"><div class="mbox"><p data-t="privacy">このアプリは個人情報を集めたり、外に送ったりしません。占いはスマホの中だけで動きます。</p><small data-t="tapclose">（タップで閉じます）</small></div></div>
+<div class="modal" id="m100"><div class="mbox"><img src="img/guide.webp" style="width:45%" alt=""><p data-t="thanks">いつも使ってくれてありがとう！感想をインスタで教えてくれたらうれしいな。もっと楽しくしていくね！</p><button class="btn pink" id="b100insta" data-t="insta">インスタを見る</button><br><br><button class="btn white" data-close data-t="close">とじる</button></div></div>
+
+<script>
+"use strict";
+const VERSION="1.0.0";
+const INSTA="https://www.instagram.com/mirateria.project/";
+const JA=(navigator.language||"ja").toLowerCase().startsWith("ja");
+const L=(j,e)=>JA?j:e;
+const $=id=>document.getElementById(id);
+
+/* ===== UI text ===== */
+const T={title:["しーちゃん占い","Shi-chan Fortune"],sub:["8つの占いで遊ぼう！","8 fun ways to read your luck!"],
+welcome:["はいさい！占いをえらんでね。何回でもできるよ〜","Haisai! Pick a fortune. Play as many times as you like!"],
+addr:["沖縄県島尻郡八重瀬町長毛379-3","379-3 Nagake, Yaese, Shimajiri, Okinawa"],
+hist:["これまでの結果","My results"],how:["ホーム画面に追加する方法","Add to Home Screen"],insta:["インスタを見る","Instagram"],
+shot:["画面全体を画像で保存","Save whole screen"],back:["← もどる","← Back"],badge:["アプリ占い","App fortune"],
+litem:["ラッキーアイテム","Lucky item"],lcolor:["ラッキーカラー","Lucky color"],again:["もう一回占う","Play again"],
+save:["結果を画像で保存","Save result image"],home:["占いえらびにもどる","Choose another"],
+android:["Androidの人は「Chrome」で開いてね","Android users: please open in Chrome"],close:["とじる","Close"],
+longpress:["画像を長押しして保存してね","Press and hold the image to save"],
+privacy:["このアプリは個人情報を集めたり、外に送ったりしません。占いはスマホの中だけで動きます。","This app does not collect or send any personal information. Fortunes run only on your phone."],
+tapclose:["（タップで閉じます）","(Tap to close)"],
+thanks:["いつも使ってくれてありがとう！感想をインスタで教えてくれたらうれしいな。もっと楽しくしていくね！","Thanks for always playing! Tell us what you think on Instagram. We'll keep making it more fun!"]};
+document.querySelectorAll("[data-t]").forEach(el=>{const k=el.dataset.t;if(!T[k])return;
+ if(el.firstChild&&el.firstChild.nodeType===3&&el.children.length){el.firstChild.nodeValue=T[k][JA?0:1]}else el.textContent=T[k][JA?0:1]});
+document.title=T.title[JA?0:1];document.documentElement.lang=JA?"ja":"en";
+$("ver").textContent="Version "+VERSION+" ／ MIRATERIA";
+
+/* ===== sound (no voice) ===== */
+let AC=null;
+function ac(){if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}}if(AC&&AC.state==="suspended")AC.resume();return AC}
+function tone(f,d,type="square",vol=.12,slide=0){const a=ac();if(!a)return;const o=a.createOscillator(),g=a.createGain();o.type=type;o.frequency.value=f;
+ if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(40,f+slide),a.currentTime+d);g.gain.value=vol;g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+d);o.connect(g);g.connect(a.destination);o.start();o.stop(a.currentTime+d)}
+const SND={pi:()=>tone(1320,.07),rattle:()=>{for(let i=0;i<4;i++)setTimeout(()=>tone(300+Math.random()*500,.04,"triangle",.1),i*25)},
+ pop:()=>tone(500,.18,"sine",.2,700),bell:()=>{[1568,2093,1568,2093].forEach((f,i)=>setTimeout(()=>tone(f,.25,"sine",.15),i*120))},
+ click:()=>tone(180,.05,"square",.12),crack:()=>{for(let i=0;i<5;i++)setTimeout(()=>tone(150+Math.random()*900,.03,"sawtooth",.1),i*18)},
+ fan:()=>{[523,659,784,1047,1319].forEach((f,i)=>setTimeout(()=>tone(f,.3,"triangle",.14),i*90))},
+ kyo:()=>{[392,330,262,523,784,1047].forEach((f,i)=>setTimeout(()=>tone(f,.25,"triangle",.14),i*110))},
+ heart:()=>tone(880+Math.random()*300,.06,"sine",.08)};
+const buzz=ms=>{try{navigator.vibrate&&navigator.vibrate(ms)}catch(e){}};
+document.addEventListener("click",e=>{if(e.target.closest("button,.card,.st,[data-tap]"))SND.pi()},true);
+
+/* ===== background decoration ===== */
+(function(){const s=$("sky");for(let i=0;i<40;i++){const d=document.createElement("i");d.className="star";d.style.left=Math.random()*100+"%";d.style.top=Math.random()*70+"%";d.style.animationDelay=Math.random()*2.4+"s";s.appendChild(d)}
+ const pe=["🌺","✨","🌸","⭐"];for(let i=0;i<9;i++){const p=document.createElement("i");p.className="petal";p.textContent=pe[i%4];p.style.left=Math.random()*100+"%";p.style.animationDuration=9+Math.random()*9+"s";p.style.animationDelay=-Math.random()*15+"s";s.appendChild(p)}})();
+
+/* ===== fortune data ===== */
+const LV=[
+ {k:"daikichi",j:"大吉",e:"Great Luck",w:14,c:"#e63946",ball:"#f5c518"},
+ {k:"chukichi",j:"中吉",e:"Good Luck",w:18,c:"#e8577a",ball:"#e63946"},
+ {k:"shokichi",j:"小吉",e:"Small Luck",w:20,c:"#3a86ff",ball:"#3a86ff"},
+ {k:"kichi",j:"吉",e:"Luck",w:24,c:"#2a9d4b",ball:"#2a9d4b"},
+ {k:"suekichi",j:"末吉",e:"Future Luck",w:20,c:"#b8860b",ball:"#ffffff"},
+ {k:"kyo",j:"凶",e:"Rare Kyo",w:4,c:"#6a2c91",ball:"#7b2fbe"}];
+const lvName=l=>JA?l.j:l.e;
+function draw(){let r=Math.random()*100,s=0;for(const l of LV){s+=l.w;if(r<s)return l}return LV[3]}
+const OPEN={
+daikichi:[["最高の運気がめぐってきています。やりたかったことに手を伸ばすなら今です。","Your luck is at its peak. If there's something you've wanted to try, now is the time."],["空がぱっと晴れたような一日。あなたの笑顔がまわりの人まで明るくします。","Like the sky suddenly clearing. Your smile will brighten everyone around you."],["追い風がビュンビュン吹いています。少し大胆なくらいがちょうどいい日です。","A strong tailwind is behind you. Being a little bold is just right today."],["うれしい知らせが届きそうな予感。連絡はこまめにチェックしてね。","Good news seems to be on its way. Keep an eye on your messages."],["がんばってきたことが実を結ぶとき。自分をたくさんほめてあげて。","Your hard work is about to pay off. Give yourself plenty of praise."],["出会い運がぐんと上がっています。久しぶりの人に声をかけてみて。","Your luck with people is rising. Reach out to someone you haven't seen in a while."],["何をやってもうまく転がりそうな日。迷ったら「やる」を選んで大丈夫。","Everything seems to roll your way today. When in doubt, go for it."],["金色の光に包まれているような運勢です。小さな幸せがつぎつぎ見つかります。","You're wrapped in golden light. Little joys will keep popping up."]],
+chukichi:[["運気はしっかり上向き。コツコツ続けてきたことに手ごたえを感じられそう。","Your luck is clearly rising. You'll feel results from your steady work."],["まわりの人の助けで、物事がスムーズに進みます。「ありがとう」を忘れずに。","Help from others makes things go smoothly. Don't forget to say thank you."],["ちょっとした思いつきが大当たりするかも。メモを手元に置いておこう。","A small idea could become a big hit. Keep a note handy."],["心がおだやかで、いい判断ができる日。大事なことは今日決めてもOK。","Your mind is calm and your judgment sharp. A fine day to decide important things."],["楽しい予定が増えそうな気配。誘われたら気軽に乗ってみて。","Fun plans seem to be coming. If invited, go along with it."],["体も心も元気いっぱい。少し遠くまで足をのばすといいことがあります。","Full of energy. Going a bit farther than usual brings good things."],["ほめられる場面がありそう。素直に受け取ると、運気がもっと上がります。","You may receive praise. Accept it openly and your luck will rise even more."],["探し物が見つかりやすい日。なくしたと思っていた物も出てくるかも。","A good day for finding things. Something you thought was lost may turn up."]],
+shokichi:[["小さな幸せがあちこちに。いつもの道で、ふと良いことに気づけそう。","Small joys are everywhere. You may notice something nice on your usual path."],["あせらず一歩ずつが吉。ゆっくりでも確実に前へ進めます。","Step by step is the way. Slow but sure progress is yours."],["身の回りを整えると運気アップ。机の上を少し片づけてみて。","Tidying up boosts your luck. Try clearing your desk a little."],["やさしい気持ちが運を呼びます。ちょっとした親切が返ってくる日。","Kindness brings luck. A small favor will come back to you."],["おいしい物に縁がある日。ひと口目をゆっくり味わってね。","A day connected with tasty food. Savor the first bite slowly."],["いつもより早めの行動で、ゆとりと幸運が生まれます。","Acting a little earlier than usual gives you room and good luck."],["気になっていたことを1つだけ片づけると、心がすっと軽くなります。","Finish just one thing on your mind, and you'll feel much lighter."],["笑う回数が多いほど運気がたまる日。おもしろい話をさがしてみて。","The more you laugh, the more luck you collect. Look for something funny."]],
+kichi:[["おだやかで安定した運勢。いつも通りを大切にすると、いいことが続きます。","A calm and steady fortune. Keeping to your routine brings good things."],["まわりとの調和がカギ。人の話をよく聞くと、いいヒントがもらえます。","Harmony is the key. Listen well and you'll get good hints."],["ゆっくり休むことで運気が回復します。今日は早めに寝るのもおすすめ。","Rest restores your luck. Going to bed early tonight is a good idea."],["準備をしっかりしておけば安心な日。持ち物を一度見直してみて。","Preparation brings peace of mind today. Double-check your belongings."],["新しいことより、今あることを丁寧に。それが幸運の近道です。","Rather than something new, do what you have carefully. That's the shortcut to luck."],["なにげない会話から、うれしいつながりが生まれそう。","A casual chat could lead to a happy connection."],["自然にふれると元気がわいてきます。空や海をながめる時間を作ってね。","Nature gives you energy. Take time to look at the sky or the sea."],["小さな約束を守ることで信頼が育ちます。地道さがあなたの強みです。","Keeping small promises builds trust. Steadiness is your strength."]],
+suekichi:[["これから運気がぐんぐん伸びていく、つぼみの時期。楽しみに待っていてね。","A budding period—your luck is about to grow. Look forward to it."],["今日まいた種は、あとで大きな花を咲かせます。あせらなくて大丈夫。","Seeds sown today will bloom big later. No need to rush."],["ゆっくりスタートでも、最後に笑うのはあなた。マイペースでいこう。","Even with a slow start, you'll smile at the end. Go at your own pace."],["ちょっとしたつまずきも、あとで笑い話になります。気楽にいこう。","Small stumbles will become funny stories later. Take it easy."],["午後から運気が上がってきます。大事な用事は後半にまわすと◎。","Your luck rises in the afternoon. Save important tasks for later."],["「まあいっか」の気持ちが幸運を呼びこみます。肩の力を抜いてね。","A relaxed \"oh well\" attitude invites luck. Loosen up."],["準備運動のような一日。明日からの好調に向けて力をためておこう。","Like a warm-up day. Store up energy for the good days ahead."],["気づかないうちに、いい流れに乗りはじめています。続けることが大切。","Without noticing, you're already riding a good flow. Keep going."]],
+kyo:[["めったに出ない「凶」を引いたあなたは、じつは強運の持ち主！自信を持って進もう。","You drew the rare \"Kyo\"! That actually makes you very lucky. Move forward with confidence."],["ある意味、宝くじの一等なみのレア！その引きの強さを、今日は自分のために使って。","As rare as a lottery jackpot! Use that luck for yourself today."],["ここからは上がるだけ。今日がいちばん低いなら、明日はもっといい日です。","From here it only goes up. If today is the bottom, tomorrow will be better."],["レアを引き当てる力はホンモノ。ちょっと気をつけるだけで、すべてうまくいきます。","Your power to draw rare ones is real. A little care and everything will go well."],["しーちゃんもびっくりの超レア！話のネタにして、みんなに自慢しちゃおう。","So rare even Shi-chan is surprised! Tell everyone and show off."],["「凶」はただの文字。本当の意味は、慎重さで幸運をつかむ日です。","\"Kyo\" is just a word. It really means a day to catch luck by being careful."],["低い確率をつかんだあなたは、何かを持っている人。思いきって挑戦してみて。","You caught a tiny chance—you've got something special. Go ahead and take a chance."],["運の貯金がたまっているサイン。ていねいに過ごすほど、あとで大きく返ってきます。","A sign your luck savings are piling up. Spend today carefully and it returns big later."]]};
+const ADV=[["水をこまめに飲もう","Drink water often"],["深呼吸を3回してからスタート","Start after three deep breaths"],["「ありがとう」を声に出して言ってみて","Say \"thank you\" out loud"],["いつもと違う道を通ってみて","Take a different route than usual"],["好きな音楽を1曲聴こう","Listen to one favorite song"],["空を見上げる時間を作ろう","Take a moment to look up at the sky"],["早めに寝て、明日にそなえよう","Go to bed early and get ready for tomorrow"],["誰かを1回ほめてみよう","Compliment someone once"],["机の上を5分だけ片づけよう","Tidy your desk for just 5 minutes"],["あたたかい飲み物でひと休み","Take a break with a warm drink"],["笑顔であいさつすると運気アップ","Greet people with a smile for a luck boost"],["気になっていた連絡を1つ返そう","Reply to one message you've put off"],["軽くストレッチして体をほぐそう","Loosen up with some light stretches"],["おいしいおやつで自分にごほうび","Treat yourself to a tasty snack"],["写真を1枚撮って今日を残そう","Take one photo to remember today"],["くつをきれいにすると吉","Cleaning your shoes brings luck"],["ゆっくり食べることを意識しよう","Try to eat slowly"],["窓をあけて空気を入れかえよう","Open a window for fresh air"],["小さな目標を1つ決めよう","Set one small goal"],["いつもより丁寧に字を書いてみて","Write a little more neatly than usual"]];
+const ITEM=[["シーサーの置物","A shisa figurine"],["ちんすこう","Chinsuko cookies"],["さんぴん茶","Sanpin jasmine tea"],["ハンカチ","A handkerchief"],["ボールペン","A ballpoint pen"],["かりゆしウェア","A kariyushi shirt"],["ハイビスカスの花","A hibiscus flower"],["貝がら","A seashell"],["サーターアンダギー","Sata andagi donuts"],["黒糖","Brown sugar candy"],["キーホルダー","A keychain"],["手ぬぐい","A tenugui towel"],["星の砂","Star sand"],["島ぞうり","Island sandals"],["麦わら帽子","A straw hat"],["水筒","A water bottle"],["手帳","A planner"],["お気に入りのマグカップ","Your favorite mug"],["花の写真","A flower photo"],["イヤホン","Earphones"]];
+const COLOR=[["太陽のオレンジ","Sunny orange"],["海の青","Ocean blue"],["ハイビスカスの赤","Hibiscus red"],["ゴーヤーの緑","Goya green"],["砂浜の白","Sandy white"],["夕焼けのピンク","Sunset pink"],["シーサーの金","Shisa gold"],["夜空の紺","Night navy"],["紅いもの紫","Beni-imo purple"],["月桃の黄緑","Shell-ginger lime"]];
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const tx=p=>JA?p[0]:p[1];
+
+/* ===== fortunes list ===== */
+const F=[
+ {id:"omikuji",j:"おみくじ筒",e:"Omikuji Tube",img:"miko",res:l=>l.k==="daikichi"?"miko_daikichi":"miko",
+  dj:"筒をふって棒を出す",de:"Shake & pull a stick",flav:[["筒からとび出した棒が、あなたの今日を教えてくれました。","The stick that jumped out tells your day."],["巫女しーちゃんが、ていねいにお祈りしておきました。","Shrine-maiden Shi-chan said a careful prayer for you."]]},
+ {id:"zeichiku",j:"筮竹",e:"Fortune Sticks",img:"ekisha",res:()=>"ekisha_mushi",
+  dj:"じゃらじゃら混ぜて1本",de:"Mix and pick one",flav:[["易者しーちゃんが虫めがねでじっくり読み取りました。","Fortune-teller Shi-chan read it with a magnifying glass."],["じゃらじゃら混ぜた筮竹から、あなただけの1本が出ました。","From the shuffled sticks, one just for you appeared."]]},
+ {id:"amida",j:"あみだくじ",e:"Amida Ladder",img:"ouen",res:()=>"ouen",
+  dj:"10本から1本えらぶ",de:"Pick 1 of 10 lines",flav:[["応援団しーちゃんの声援で、ここまでたどりつきました！","Cheered on by Shi-chan, you made it!"],["曲がりくねった道の先に、この結果が待っていました。","This was waiting at the end of the winding path."]]},
+ {id:"fukubiki",j:"福引きガラガラ",e:"Lottery Drum",img:"fukubiki",res:()=>"fukubiki",
+  dj:"ぐるぐる回して玉を出す",de:"Spin to drop a ball",flav:[["カランカラン！はっぴ姿のしーちゃんが鐘を鳴らしてくれました。","Ring-ring! Shi-chan in a happi coat rang the bell."],["ガラガラから出た玉の色が、今日の運勢です。","The ball's color is today's fortune."]]},
+ {id:"gacha",j:"ガチャガチャ",e:"Capsule Toy",img:"gacha",res:()=>"gacha",
+  dj:"ハンドルを回してね",de:"Turn the handle",flav:[["カプセルの中から、今日の運勢が出てきました。","Today's fortune came out of the capsule."],["何が出るかなのドキドキも、運気の一部です。","The thrill of what's inside is part of your luck."]]},
+ {id:"hibiscus",j:"ハイビスカス花占い",e:"Hibiscus Petals",img:"hibiscus",res:()=>"hibiscus",
+  dj:"花びらを1枚ずつ",de:"Pull petals one by one",flav:[["最後の花びらが、そっと教えてくれました。","The last petal gently told you."],["ハイビスカスのように、明るく咲く一日に。","May your day bloom bright like a hibiscus."]]},
+ {id:"chinsuko",j:"ちんすこう割り",e:"Chinsuko Snap",img:"chinsuko",res:()=>"chinsuko",
+  dj:"パキッと割ってみて",de:"Snap it in two",flav:[["パキッと割れたちんすこうから、おみくじが出てきました。","A fortune slip came out of the snapped chinsuko."],["甘いちんすこうのように、やさしい一日に。","May your day be sweet like chinsuko."]]},
+ {id:"shisa",j:"シーサーの玉",e:"Shisa's Ball",img:"nade",res:()=>"nade",
+  dj:"なでなでで玉が出る",de:"Pet her for a ball",flav:[["なでなでされたしーちゃんが、ごきげんで玉を出してくれました。","Petted Shi-chan happily gave you a ball."],["シーサーの守りが、今日のあなたについています。","The shisa's protection is with you today."]]}];
+const grid=$("grid");
+F.forEach(f=>{const b=document.createElement("button");b.className="card";b.innerHTML=`<img src="img/${f.img}.webp" alt=""><b>${JA?f.j:f.e}</b><span>${JA?f.dj:f.de}</span>`;b.onclick=()=>start(f.id);grid.appendChild(b)});
+
+/* ===== storage (auto save) ===== */
+const store={get(k,d){try{const v=localStorage.getItem(k);return v===null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+let HIST=store.get("uranai_hist",[]);
+let LAST=null;
+const saveAll=()=>{store.set("uranai_hist",HIST.slice(-60));if(LAST)store.set("uranai_last",LAST)};
+addEventListener("pagehide",saveAll);document.addEventListener("visibilitychange",()=>{if(document.hidden)saveAll()});
+
+/* ===== screens ===== */
+function show(id){document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("on",s.id===id));scrollTo(0,0)}
+let CUR=null,cleanup=null;
+const stage=$("stage");
+function say(t){$("pSay").textContent=t}
+function start(id){const f=F.find(x=>x.id===id);CUR=f;if(cleanup){cleanup();cleanup=null}document.querySelectorAll(".say .flagtxt").forEach(x=>x.remove());stage.innerHTML="";stage.onpointerdown=stage.onpointermove=stage.onpointerup=stage.onpointercancel=null;
+ $("pTitle").textContent=JA?f.j:f.e;$("pImg").src=`img/${f.img}.webp`;show("play");GAMES[id]()}
+$("bBack").onclick=()=>{if(cleanup){cleanup();cleanup=null}show("home")};
+$("bHome").onclick=()=>show("home");
+$("bAgain").onclick=()=>start(CUR.id);
+
+function finish(level){
+ const f=CUR;const op=pick(OPEN[level.k]),fl=pick(f.flav),ad=pick(ADV),it=pick(ITEM),co=pick(COLOR);
+ LAST={t:Date.now(),f:f.id,k:level.k,op,fl,ad,it,co};HIST.push({t:LAST.t,f:f.id,k:level.k});saveAll();
+ renderResult(LAST)}
+function renderResult(r){const f=F.find(x=>x.id===r.f),l=LV.find(x=>x.k===r.k);
+ $("rImg").src=`img/${f.res(l)}.webp`;$("rLevel").textContent=lvName(l);$("rLevel").style.color=l.c;
+ $("rKind").textContent=(JA?f.j:f.e)+L(" の結果"," result");
+ $("rText").innerHTML=`${esc(tx(r.op))}<br>${esc(tx(r.fl))}<br>🌺 ${esc(tx(r.ad))}`;
+ $("rItem").textContent=tx(r.it);$("rColor").textContent=tx(r.co);
+ show("result");l.k==="kyo"?SND.kyo():SND.fan();buzz([30,40,30])}
+const esc=s=>s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* helpers */
+function el(tag,cls,parent,html){const e=document.createElement(tag);if(cls)e.className=cls;if(html!==undefined)e.innerHTML=html;(parent||stage).appendChild(e);return e}
+function hint(t){let h=stage.querySelector(".hint");if(!h)h=el("div","hint");h.textContent=t}
+function meter(){const m=el("div","meter");const i=el("i","",m);return v=>i.style.width=Math.min(100,v*100)+"%"}
+const sz=()=>stage.getBoundingClientRect();
+function pos(e){const r=sz();return{x:e.clientX-r.left,y:e.clientY-r.top}}
+
+/* ===== GAMES ===== */
+const GAMES={
+/* 1 omikuji: hold & shake left-right, then swipe up */
+omikuji(){
+ say(L("筒を指で押さえたまま、左右に3〜4回ふってね！","Hold the tube and shake it left and right 3-4 times!"));
+ const tube=el("div","tube");el("div","lab",tube,L("御神籤","FORTUNE"));
+ for(let i=0;i<5;i++){const s=el("div","stick",tube);s.style.cssText+=`height:40px;left:${32+i*9}px;top:-${18+(i%2)*6}px;z-index:-1`}
+ const m=meter();hint(L("👆 押さえて左右にふる","👆 Hold and shake"));
+ let down=false,sx=0,sy=0,lastX=0,dir=0,ext=0,shakes=0,ready=false,done=false,need=7;
+ stage.onpointerdown=e=>{if(done)return;down=true;const p=pos(e);sx=lastX=p.x;sy=p.y;ext=p.x;stage.setPointerCapture(e.pointerId)};
+ stage.onpointermove=e=>{if(!down||done)return;const p=pos(e);const dx=p.x-sx;
+  if(!ready){tube.style.transform=`translateX(${Math.max(-90,Math.min(90,dx))}px) rotate(${Math.max(-18,Math.min(18,dx/5))}deg)`;
+   const d=Math.sign(p.x-lastX);if(d&&d!==dir){if(Math.abs(p.x-ext)>22){shakes++;SND.rattle();buzz(15);m(shakes/need)}dir=d;ext=p.x}lastX=p.x;
+   if(shakes>=need){ready=true;tube.style.transform="";say(L("いいね！最後に上へシュッとスワイプ！","Nice! Now swipe up!"));hint(L("👆 上へシュッ！","👆 Swipe up!"));sy=p.y}}
+  else if(sy-p.y>60){done=true;out()}};
+ stage.onpointerup=stage.onpointercancel=e=>{down=false;if(!ready)tube.style.transform="";if(ready&&!done){sy=9999}};
+ stage.addEventListener("pointerdown",e=>{if(ready&&!done)sy=pos(e).y});
+ function out(){const lv=draw();const n=1+Math.floor(Math.random()*50);SND.pop();buzz(40);
+  const s=el("div","stick",tube);s.style.cssText+=`height:150px;left:47px;top:-20px;z-index:2;transition:top .6s cubic-bezier(.2,1.4,.5,1)`;
+  el("em","",s,L("第"+n+"番","No."+n));requestAnimationFrame(()=>requestAnimationFrame(()=>s.style.top="-150px"));
+  say(L("出た〜！何番かな？","Here it comes!"));hint("");setTimeout(()=>finish(lv),1500)}
+},
+/* 2 zeichiku: rub to mix, then tap one stick */
+zeichiku(){
+ say(L("竹の棒を、指でじゃらじゃら混ぜてね！","Rub the sticks with your finger to mix them!"));
+ const r=sz(),n=11,sticks=[];const cx=r.width/2,base=r.height-60;
+ const cup=el("div","");cup.style.cssText=`position:absolute;left:${cx-50}px;top:${base-110}px;width:100px;height:120px;border-radius:10px 10px 18px 18px;background:repeating-linear-gradient(90deg,#7a4a1c 0 14px,#6a3e16 14px 17px);box-shadow:0 6px 0 rgba(0,0,0,.25);z-index:3`;
+ for(let i=0;i<n;i++){const s=el("div","stick");s.style.cssText+=`height:220px;left:${cx-8}px;top:${base-290}px;transform-origin:50% 100%;transition:transform .12s`;sticks.push(s)}
+ const fan=k=>sticks.forEach((s,i)=>s.style.transform=`rotate(${(i-(n-1)/2)*k}deg)`);fan(4);
+ const m=meter();hint(L("👆 こすって混ぜる","👆 Rub to mix"));
+ let down=false,lp=null,dist=0,phase=0;const need=1600;
+ stage.onpointerdown=e=>{down=true;lp=pos(e);stage.setPointerCapture(e.pointerId)};
+ stage.onpointermove=e=>{if(!down||phase)return;const p=pos(e);dist+=Math.hypot(p.x-lp.x,p.y-lp.y);lp=p;
+  if(Math.random()<.35){SND.rattle();buzz(8)}sticks.forEach((s,i)=>s.style.transform=`rotate(${(i-(n-1)/2)*4+(Math.random()*10-5)}deg) translateY(${Math.random()*14}px)`);m(dist/need);
+  if(dist>=need){phase=1;down=false;fan(9);say(L("よし！好きな1本をタップしてね","OK! Tap the stick you like"));hint(L("👆 1本えらぶ","👆 Pick one"));
+   sticks.forEach(s=>{s.style.cursor="pointer";s.dataset.tap=1;s.onpointerdown=ev=>{ev.stopPropagation();pickOne(s)}})}};
+ stage.onpointerup=stage.onpointercancel=()=>{down=false;if(!phase)fan(4)};
+ function pickOne(s){if(phase!==1)return;phase=2;SND.pi();SND.pop();buzz(40);const lv=draw();
+  s.style.transition="transform .7s cubic-bezier(.2,1.4,.5,1)";s.style.zIndex=5;s.style.transform+=` translateY(-120px)`;el("em","",s,lvName(lv).slice(0,2));
+  sticks.forEach(o=>{if(o!==s)o.style.opacity=.45});hint("");say(L("むむっ…読めたぞ！","Hmm... I can read it!"));setTimeout(()=>finish(lv),1500)}
+},
+/* 3 amida */
+amida(){
+ say(L("10本のうち、好きな番号をえらんでね！","Pick a number from 1 to 10!"));
+ const r=sz(),N=10,W=r.width,H=r.height,mx=24,colX=i=>mx+i*(W-mx*2)/(N-1),top=72,bot=H-58,rows=13;
+ const lv=draw();const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");svg.setAttribute("width",W);svg.setAttribute("height",H);svg.style.cssText="position:absolute;left:0;top:0;pointer-events:none";stage.appendChild(svg);
+ const ln=(x1,y1,x2,y2,c,w)=>{const l=document.createElementNS(svg.namespaceURI,"line");l.setAttribute("x1",x1);l.setAttribute("y1",y1);l.setAttribute("x2",x2);l.setAttribute("y2",y2);l.setAttribute("stroke",c);l.setAttribute("stroke-width",w);l.setAttribute("stroke-linecap","round");svg.appendChild(l);return l};
+ for(let i=0;i<N;i++)ln(colX(i),top,colX(i),bot,"#fff",4);
+ const rungs=[];const rh=(bot-top)/(rows+1);
+ for(let k=0;k<rows;k++){const y=top+rh*(k+1);let i=Math.floor(Math.random()*2);while(i<N-1){if(Math.random()<.55){rungs.push({y,i});ln(colX(i),y,colX(i+1),y,"#fff",4);i+=2}else i++}}
+ rungs.sort((a,b)=>b.y-a.y);
+ function trace(s){let c=s,pts=[[colX(c),bot]];for(const g of rungs){if(g.i===c){pts.push([colX(c),g.y]);c=c+1;pts.push([colX(c),g.y])}else if(g.i===c-1){pts.push([colX(c),g.y]);c=c-1;pts.push([colX(c),g.y])}}pts.push([colX(c),top]);return{c,pts}}
+ const others=LV.filter(x=>x.k!=="kyo");
+ const btns=[];for(let i=0;i<N;i++){const b=el("button","st");b.style.left=colX(i)+"px";b.textContent=i+1;b.onclick=()=>go(i);btns.push(b)}
+ hint("");
+ function go(s){btns.forEach(b=>b.disabled=true);btns[s].style.background="#ff7aa8";const t=trace(s),end=t.c;
+  const labels=[];for(let i=0;i<N;i++)labels[i]=pick(others);labels[end]=lv;
+  const nb=end>0&&end<N-1?(Math.random()<.5?end-1:end+1):(end===0?1:N-2);
+  if(lv.k!=="kyo")labels[nb]=LV[5];else labels[nb]=LV[0];
+  labels.forEach((l,i)=>{const d=el("div","lbl");d.style.left=colX(i)+"px";d.textContent=lvName(l).replace("Rare ","");d.style.color=l.c;if(!JA){d.style.writingMode="vertical-rl";d.style.textOrientation="mixed";d.style.fontSize="11px"}});
+  const pi=$("pImg");const ft=el("div","flagtxt",pi.parentNode);ft.style.left=(pi.offsetLeft+pi.offsetWidth*.18)+"px";ft.style.top=(pi.offsetTop+pi.offsetHeight*.06)+"px";ft.style.fontSize="12px";ft.style.width=(pi.offsetWidth*.7)+"px";ft.style.textAlign="center";
+  const setF=t=>ft.textContent=t;setF(L("いけいけ！","Go go!"));
+  say(L("光の玉が登っていくよ…いけいけ〜！","The light is climbing... go go!"));
+  const pl=document.createElementNS(svg.namespaceURI,"polyline");pl.setAttribute("fill","none");pl.setAttribute("stroke","#ffd23f");pl.setAttribute("stroke-width","7");pl.setAttribute("stroke-linecap","round");pl.setAttribute("stroke-linejoin","round");pl.style.filter="drop-shadow(0 0 6px #ffd23f)";svg.appendChild(pl);
+  const dot=document.createElementNS(svg.namespaceURI,"circle");dot.setAttribute("r","10");dot.setAttribute("fill","#fff");dot.style.filter="drop-shadow(0 0 10px #ffd23f)";svg.appendChild(dot);
+  const P=t.pts;let seg=0,u=0,drawn=[P[0]];const speed=3.2;
+  function step(){if(seg>=P.length-1){SND.bell();say(L("ゴール！","Goal!"));setF(lv.k==="kyo"?L("レア〜！","Rare!"):L("やった！","Yay!"));setTimeout(()=>finish(lv),1300);return}
+   const a=P[seg],b=P[seg+1],len=Math.hypot(b[0]-a[0],b[1]-a[1])||1;u+=speed/len;
+   if(u>=1){u=0;seg++;drawn.push(b);if(a[1]===b[1])SND.click();
+    const curC=Math.round((b[0]-mx)/((W-mx*2)/(N-1)));if(curC===nb){setF(L("ダメ〜！","No!"));say(L("あわわ…そっちに行かないで〜！","Oh no... don't go that way!"))}else{setF(L("いけいけ！","Go go!"))}}
+   const x=a[0]+(b[0]-a[0])*Math.min(u,1),y=a[1]+(b[1]-a[1])*Math.min(u,1);
+   pl.setAttribute("points",drawn.concat([[x,y]]).map(p=>p.join(",")).join(" "));dot.setAttribute("cx",x);dot.setAttribute("cy",y);raf=requestAnimationFrame(step)}
+  let raf=requestAnimationFrame(step);cleanup=()=>cancelAnimationFrame(raf)}
+},
+/* 4 fukubiki: circle drag */
+fukubiki(){
+ say(L("ガラガラのまわりを、指でぐるぐる2回まわしてね！","Draw circles around the drum twice!"));
+ const r=sz(),cx=r.width/2,cy=r.height*.5,R=Math.min(r.width,r.height)*.26;
+ const lg=el("div","legend");lg.innerHTML=LV.map(l=>`<div><i style="background:${l.ball}"></i>${lvName(l)}</div>`).join("");
+ const drum=el("div","");drum.innerHTML=`<svg viewBox="-110 -110 220 220" width="${R*2}" height="${R*2}"><polygon points="${[...Array(8)].map((_,i)=>{const a=Math.PI/8+i*Math.PI/4;return (100*Math.cos(a)).toFixed(1)+","+(100*Math.sin(a)).toFixed(1)}).join(" ")}" fill="#c58a4b" stroke="#6a3e16" stroke-width="8"/><polygon points="${[...Array(8)].map((_,i)=>{const a=Math.PI/8+i*Math.PI/4;return (62*Math.cos(a)).toFixed(1)+","+(62*Math.sin(a)).toFixed(1)}).join(" ")}" fill="#e2a868" stroke="#6a3e16" stroke-width="4"/><circle r="14" fill="#6a3e16"/><rect x="-5" y="-100" width="10" height="70" fill="#444"/><circle cy="-100" r="13" fill="#e63946" stroke="#7a1d24" stroke-width="4"/></svg>`;
+ drum.style.cssText=`position:absolute;left:${cx-R}px;top:${cy-R}px;width:${R*2}px;height:${R*2}px`;
+ const tray=el("div","");tray.style.cssText=`position:absolute;left:${cx-60}px;top:${cy+R+14}px;width:120px;height:22px;border-radius:0 0 30px 30px;background:#7a4a1c`;
+ const m=meter();hint(L("👆 ぐるぐる回す","👆 Spin in circles"));
+ let down=false,la=0,tot=0,rot=0,done=false;const need=Math.PI*4;
+ const ang=p=>Math.atan2(p.y-cy,p.x-cx);
+ stage.onpointerdown=e=>{if(done)return;down=true;la=ang(pos(e));stage.setPointerCapture(e.pointerId)};
+ stage.onpointermove=e=>{if(!down||done)return;const a=ang(pos(e));let d=a-la;if(d>Math.PI)d-=2*Math.PI;if(d<-Math.PI)d+=2*Math.PI;la=a;rot+=d;tot+=Math.abs(d);
+  drum.style.transform=`rotate(${rot}rad)`;if(Math.random()<.18){SND.rattle();buzz(6)}m(tot/need);if(tot>=need){done=true;drop()}};
+ stage.onpointerup=stage.onpointercancel=()=>down=false;
+ function drop(){const lv=draw();hint("");SND.pop();const b=el("div","ball");b.style.background=lv.ball;b.style.left=(cx-22)+"px";b.style.top=(cy)+"px";b.style.transition="top .7s cubic-bezier(.3,1.6,.6,1)";
+  requestAnimationFrame(()=>requestAnimationFrame(()=>b.style.top=(cy+R-14)+"px"));setTimeout(()=>{SND.bell();buzz([40,60,40]);say(lv.k==="daikichi"?L("大当たり〜！カランカラン！","Jackpot! Ring-ring!"):L("出た出た！何色かな？","Here it is! What color?"))},700);setTimeout(()=>finish(lv),2000)}
+},
+/* 5 gacha: turn handle */
+gacha(){
+ say(L("右下のハンドルを、指でぐるっと回してね！","Turn the handle with your finger!"));
+ const r=sz(),cx=r.width/2,W=Math.min(r.width*.55,200),top=40;
+ const dome=el("div","");dome.style.cssText=`position:absolute;left:${cx-W/2}px;top:${top}px;width:${W}px;height:${W}px;border-radius:50%;background:radial-gradient(circle at 30% 30%,rgba(255,255,255,.85),rgba(200,230,255,.35) 60%);border:4px solid #fff;overflow:hidden`;
+ const cols=["#ff7aa8","#ffd23f","#3a86ff","#2a9d4b","#e63946","#b07bff"];for(let i=0;i<14;i++){const c=el("div","ball",dome);c.style.cssText+=`width:${W*.2}px;height:${W*.2}px;left:${10+Math.random()*(W*.7)}px;top:${W*.42+Math.random()*(W*.4)}px;background:linear-gradient(${cols[i%6]} 50%,#fff 50%)`}
+ const base=el("div","");const bh=W*.62;base.style.cssText=`position:absolute;left:${cx-W/2-10}px;top:${top+W-10}px;width:${W+20}px;height:${bh}px;background:#e63946;border-radius:12px;box-shadow:inset 0 -8px 0 #a01f2a`;
+ const slot=el("div","",base);slot.style.cssText=`position:absolute;left:14px;bottom:14px;width:${W*.3}px;height:${W*.22}px;background:#3a0d12;border-radius:8px`;
+ const K=W*.32;const knob=el("div","",base);knob.dataset.tap=1;knob.style.cssText=`position:absolute;right:16px;top:${bh*.18}px;width:${K}px;height:${K}px;border-radius:50%;background:#d9d9d9;border:4px solid #888`;
+ const bar=el("div","",knob);bar.style.cssText=`position:absolute;left:50%;top:8%;width:22%;height:84%;margin-left:-11%;background:#888;border-radius:8px`;
+ const kr=()=>{const b=knob.getBoundingClientRect(),s=sz();return{x:b.left-s.left+b.width/2,y:b.top-s.top+b.height/2}};
+ const m=meter();hint(L("👆 ハンドルを回す（タップでもOK）","👆 Turn the handle (or tap)"));
+ let down=false,la=0,tot=0,rot=0,done=false,clicks=0;const need=Math.PI*2;
+ const ang=p=>{const c=kr();return Math.atan2(p.y-c.y,p.x-c.x)};
+ const add=d=>{rot+=d;tot+=Math.abs(d);knob.style.transform=`rotate(${rot}rad)`;const c=Math.floor(tot/(Math.PI/2));if(c>clicks){clicks=c;SND.click();buzz(15)}m(tot/need);if(tot>=need&&!done){done=true;out()}};
+ stage.onpointerdown=e=>{if(done)return;down=true;la=ang(pos(e));stage.setPointerCapture(e.pointerId);const c=kr(),p=pos(e);if(Math.hypot(p.x-c.x,p.y-c.y)<K*.7)down="knob"};
+ stage.onpointermove=e=>{if(!down||done)return;const a=ang(pos(e));let d=a-la;if(d>Math.PI)d-=2*Math.PI;if(d<-Math.PI)d+=2*Math.PI;la=a;add(d)};
+ stage.onpointerup=e=>{if(down==="knob"&&!done){let k=0;const t=setInterval(()=>{add(Math.PI/16);if(++k>=8||done)clearInterval(t)},25)}down=false};
+ stage.onpointercancel=()=>down=false;
+ function out(){const lv=draw();hint("");SND.pop();const c=cols[Math.floor(Math.random()*6)];const S=W*.34;
+  const cap=el("div","ball");cap.dataset.tap=1;const sr=slot.getBoundingClientRect(),s=sz();
+  cap.style.cssText+=`width:${S}px;height:${S}px;left:${sr.left-s.left}px;top:${sr.top-s.top}px;background:linear-gradient(${c} 50%,#fff 50%);transition:all .8s cubic-bezier(.3,1.5,.6,1);z-index:5`;
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{cap.style.left=(cx-S/2)+"px";cap.style.top=(top+W-10+bh+10)+"px"}));
+  say(L("出た！カプセルをタップして開けてね","Got it! Tap the capsule to open"));hint(L("👆 カプセルをタップ","👆 Tap the capsule"));
+  cap.onpointerdown=e=>{e.stopPropagation();SND.pi();SND.pop();buzz(40);cap.style.transform="scale(1.4) rotate(20deg)";cap.style.opacity="0";hint("");say(L("中身は…？","What's inside...?"));setTimeout(()=>finish(lv),700)}}
+},
+/* 6 hibiscus: pull petals */
+hibiscus(){
+ say(L("花びらを1枚ずつタップしてとってね","Tap the petals one by one"));
+ const r=sz(),cx=r.width/2,cy=r.height*.48,R=Math.min(r.width,r.height)*.36;const lv=draw();
+ const N=5;const seq=[];const others=LV.filter(x=>x.k!==lv.k&&x.k!=="kyo");for(let i=0;i<N-1;i++)seq.push(pick(others));seq.push(lv);
+ const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");svg.setAttribute("viewBox","-120 -120 240 240");svg.setAttribute("width",R*2);svg.setAttribute("height",R*2);svg.style.cssText=`position:absolute;left:${cx-R}px;top:${cy-R}px;overflow:visible`;stage.appendChild(svg);
+ let left=N;const petals=[];
+ for(let i=0;i<N;i++){const g=document.createElementNS(svg.namespaceURI,"path");const a=i*72-90;g.setAttribute("d","M0 0 C -55 -30 -60 -100 0 -112 C 60 -100 55 -30 0 0Z");g.setAttribute("fill",i%2?"#e63946":"#f0475a");g.setAttribute("stroke","#a01f2a");g.setAttribute("stroke-width","3");g.setAttribute("transform",`rotate(${a+90})`);g.style.transition="transform .9s ease-out,opacity .9s";g.style.cursor="pointer";g.dataset.tap=1;svg.appendChild(g);petals.push(g);
+  g.addEventListener("pointerdown",e=>{e.stopPropagation();if(g.dataset.gone)return;g.dataset.gone=1;SND.pi();buzz(15);const idx=N-left;left--;const l=seq[idx];
+   const rad=(a)*Math.PI/180;g.setAttribute("transform",`translate(${Math.cos(rad)*180},${Math.sin(rad)*180+60}) rotate(${a+90+120})`);g.style.opacity=0;
+   const t=el("div","flypetal");t.textContent=lvName(l);t.style.left=(cx-30)+"px";t.style.top=(cy-14)+"px";t.style.width="60px";t.style.textAlign="center";
+   if(left===0){t.style.fontSize="44px";t.style.width="200px";t.style.left=(cx-100)+"px";t.style.top=(cy-30)+"px";t.style.color=l.c;t.style.textShadow="0 0 0 #fff,0 3px 0 #fff,0 0 12px #fff";t.style.transform="scale(.3)";requestAnimationFrame(()=>requestAnimationFrame(()=>t.style.transform="scale(1)"));c.style.display="none"}
+   else requestAnimationFrame(()=>requestAnimationFrame(()=>{t.style.transform=`translate(${Math.cos(rad)*R*.9}px,${Math.sin(rad)*R*.9}px)`;t.style.opacity=0}));
+   if(left===0){say(L("最後の1枚は…！","The last petal is...!"));hint("");setTimeout(()=>finish(lv),1400)}else{say(L(`のこり${left}枚…ドキドキ`,`${left} left... so exciting`));SND.heart()}})}
+ const c=document.createElementNS(svg.namespaceURI,"circle");c.setAttribute("r","18");c.setAttribute("fill","#ffd23f");c.setAttribute("stroke","#b8860b");c.setAttribute("stroke-width","3");svg.appendChild(c);
+ hint(L("👆 花びらをタップ","👆 Tap a petal"))
+},
+/* 7 chinsuko: choose side, swipe down to snap */
+chinsuko(){
+ say(L("割ったら大きいのはどっち？左か右をえらんでね","Which half will be bigger? Pick left or right"));
+ const r=sz(),cx=r.width/2,cy=r.height*.42,BW=Math.min(r.width*.78,300),BH=BW*.3;
+ const mk=(x,w,br)=>{const d=el("div","");d.style.cssText=`position:absolute;left:${x}px;top:${cy-BH/2}px;width:${w}px;height:${BH}px;border-radius:${br};background:repeating-linear-gradient(90deg,#e7bf7a 0 10px,#d9a95a 10px 14px);box-shadow:inset 0 -6px 0 #b7843a,0 6px 0 rgba(0,0,0,.2);transition:transform .6s cubic-bezier(.2,1.4,.5,1)`;return d};
+ const whole=mk(cx-BW/2,BW,BH/2+"px");
+ let choice=null,done=false;
+ const bl=el("button","btn");bl.textContent=L("左","Left");bl.style.cssText+=`position:absolute;left:12px;bottom:46px;width:40%`;
+ const br=el("button","btn pink");br.textContent=L("右","Right");br.style.cssText+=`position:absolute;right:12px;bottom:46px;width:40%`;
+ const ch=s=>{choice=s;bl.remove();br.remove();say(L("ちんすこうを上から下へシュッとなぞって割ってね！","Swipe down across the chinsuko to snap it!"));hint(L("👇 上から下へなぞる","👇 Swipe down"))};
+ bl.onclick=()=>ch("L");br.onclick=()=>ch("R");
+ let sy=null;
+ stage.onpointerdown=e=>{if(!choice||done)return;sy=pos(e).y;stage.setPointerCapture(e.pointerId)};
+ stage.onpointermove=e=>{if(sy===null||done)return;if(pos(e).y-sy>70){done=true;snap()}};
+ stage.onpointerup=stage.onpointercancel=()=>sy=null;
+ function snap(){const lv=draw();SND.crack();buzz([30,30,60]);const ratio=.3+Math.random()*.4,w1=BW*ratio;whole.remove();
+  const a=mk(cx-BW/2,w1,`${BH/2}px 4px 4px ${BH/2}px`),b=mk(cx-BW/2+w1,BW-w1,`4px ${BH/2}px ${BH/2}px 4px`);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{a.style.transform="translateX(-26px) rotate(-12deg)";b.style.transform="translateX(26px) rotate(12deg)"}));
+  for(let i=0;i<8;i++){const c=el("div","");c.style.cssText=`position:absolute;left:${cx-BW/2+w1}px;top:${cy}px;width:7px;height:7px;background:#d9a95a;border-radius:2px;transition:transform .7s ease-out,opacity .7s`;requestAnimationFrame(()=>requestAnimationFrame(()=>{c.style.transform=`translate(${Math.random()*80-40}px,${Math.random()*90+10}px)`;c.style.opacity=0}))}
+  const big=ratio>.5?"L":"R";const win=big===choice;
+  const slip=el("div","");slip.style.cssText=`position:absolute;left:${cx-BW/2+w1-22}px;top:${cy-10}px;width:44px;height:20px;background:#fff;border:2px solid #e63946;border-radius:4px;transition:all .8s cubic-bezier(.2,1.4,.5,1);font-weight:900;color:#e63946;text-align:center;font-size:12px;line-height:16px;overflow:hidden`;
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{slip.style.top=(cy-BH/2-70)+"px";slip.style.height="50px";slip.style.lineHeight="46px";slip.style.fontSize="18px";slip.style.width="88px";slip.style.left=(cx-44)+"px";slip.textContent=L("おみくじ","Fortune")}));
+  hint("");say(win?L("予想的中〜！おみくじも出てきたよ","You guessed right! A fortune slip popped out"):L("おしい〜！でもおみくじが出てきたよ","So close! But a fortune slip popped out"));
+  setTimeout(()=>finish(lv),1800)}
+},
+/* 8 shisa: pet the head */
+shisa(){
+ say(L("しーちゃんの頭を、指でなでなでしてね","Pet Shi-chan's head with your finger"));
+ $("pImg").style.visibility="hidden";
+ const r=sz(),ih=r.height*.78,iw=ih*367/520,ix=(r.width-iw)/2,iy=12;
+ const im=el("img","");im.src="img/nade.webp";im.style.cssText=`position:absolute;left:${ix}px;top:${iy}px;height:${ih}px;pointer-events:none;transition:transform .15s`;
+ const m=meter();hint(L("👆 頭をなでる","👆 Pet the head"));
+ let down=false,lp=null,dist=0,done=false;const need=2200;
+ stage.onpointerdown=e=>{if(done)return;down=true;lp=pos(e);stage.setPointerCapture(e.pointerId)};
+ stage.onpointermove=e=>{if(!down||done)return;const p=pos(e);dist+=Math.hypot(p.x-lp.x,p.y-lp.y);lp=p;m(dist/need);im.style.transform=`rotate(${Math.sin(dist/60)*4}deg)`;
+  if(Math.random()<.12){SND.heart();const h=el("div","flypetal");h.textContent="💗";h.style.left=p.x+"px";h.style.top=p.y+"px";requestAnimationFrame(()=>requestAnimationFrame(()=>{h.style.transform="translateY(-70px) scale(1.5)";h.style.opacity=0}));setTimeout(()=>h.remove(),1000)}
+  if(dist>=need){done=true;out()}};
+ stage.onpointerup=stage.onpointercancel=()=>down=false;
+ cleanup=()=>{$("pImg").style.visibility=""};
+ function out(){const lv=draw();im.style.transform="";hint("");SND.pop();buzz([40,40,80]);
+  const mxp=ix+iw*.49,myp=iy+ih*.43;const b=el("div","ball");b.style.background=lv.ball;b.style.left=(mxp-22)+"px";b.style.top=(myp-22)+"px";b.style.transform="scale(.2)";b.style.transition="transform .4s,top .9s cubic-bezier(.3,1.6,.6,1)";
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{b.style.transform="scale(1.3)";b.style.top=(r.height-80)+"px"}));
+  say(L("ぺっ！ごきげんで玉が出たよ","Pop! Out comes a happy ball"));setTimeout(()=>finish(lv),1800)}
+}};
+
+/* ===== image save (whole content as one image) ===== */
+function loadImg(src){return new Promise(res=>{const i=new Image();i.onload=()=>res(i);i.onerror=()=>res(null);i.src=src})}
+function wrap(ctx,text,x,y,maxW,lh){let line="",lines=[];for(const ch of text){if(ch==="\n"){lines.push(line);line="";continue}const t=line+ch;if(ctx.measureText(t).width>maxW&&line){lines.push(line);line=ch}else line=t}if(line)lines.push(line);
+ if(!JA){lines=[];for(const para of text.split("\n")){let cur="";for(const w of para.split(/(\s+)/)){const t=cur+w;if(ctx.measureText(t).width>maxW&&cur.trim()){lines.push(cur.trim());cur=w.trim()}else cur=t}if(cur.trim())lines.push(cur.trim())}}
+ lines.forEach((l,i)=>ctx.fillText(l,x,y+i*lh));return lines.length*lh}
+const FONT='"Hiragino Maru Gothic ProN","Hiragino Sans",sans-serif';
+async function shareCanvas(cv,name){cv.toBlob(async b=>{const file=new File([b],name,{type:"image/png"});
+ if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file]});return}catch(e){if(e.name==="AbortError")return}}
+ $("mImgEl").src=URL.createObjectURL(b);$("mImg").classList.add("on")},"image/png")}
+function bg(ctx,W,H){const g=ctx.createLinearGradient(0,0,W*.3,H);g.addColorStop(0,"#3a1460");g.addColorStop(.4,"#7b2a86");g.addColorStop(.75,"#e8577a");g.addColorStop(1,"#ffb347");ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
+function rr(ctx,x,y,w,h,r){ctx.beginPath();ctx.roundRect?ctx.roundRect(x,y,w,h,r):ctx.rect(x,y,w,h)}
+$("bSave").onclick=async()=>{if(!LAST)return;const r=LAST,f=F.find(x=>x.id===r.f),l=LV.find(x=>x.k===r.k);
+ const W=1080,cv=document.createElement("canvas"),ctx=cv.getContext("2d");cv.width=W;cv.height=2400;
+ const im=await loadImg(`img/${f.res(l)}.webp`);
+ ctx.font=`600 46px ${FONT}`;const body=[tx(r.op),tx(r.fl),"🌺 "+tx(r.ad)].join("\n");
+ // measure height
+ const tmp=document.createElement("canvas").getContext("2d");tmp.font=ctx.font;
+ let H=60+90+40+560+40+150+60;ctx.textBaseline="top";
+ // draw
+ const draw2=(h)=>{cv.height=h;bg(ctx,W,h);ctx.textBaseline="top";ctx.textAlign="center";ctx.fillStyle="#fff";ctx.font=`900 72px ${FONT}`;ctx.fillText(T.title[JA?0:1],W/2,50);
+  ctx.fillStyle="#fffdf4";rr(ctx,50,160,W-100,h-260,50);ctx.fill();ctx.lineWidth=8;ctx.strokeStyle="#ffd23f";ctx.stroke();
+  ctx.fillStyle="#5b2a86";rr(ctx,W-340,190,260,60,30);ctx.fill();ctx.fillStyle="#fff";ctx.font=`800 30px ${FONT}`;ctx.fillText(T.badge[JA?0:1],W-210,203);
+  let y=270;if(im){const ih=520,iw=ih*im.width/im.height;ctx.drawImage(im,(W-iw)/2,y,iw,ih)}y+=540;
+  ctx.fillStyle=l.c;ctx.font=`900 150px ${FONT}`;ctx.fillText(lvName(l),W/2,y);y+=170;
+  ctx.fillStyle="#7a5a2a";ctx.font=`700 36px ${FONT}`;ctx.fillText((JA?f.j:f.e)+L(" の結果"," result"),W/2,y);y+=70;
+  ctx.textAlign="left";ctx.fillStyle="#2b1d0e";ctx.font=`600 46px ${FONT}`;y+=wrap(ctx,body,110,y,W-220,74)+30;
+  ctx.textAlign="center";ctx.fillStyle="#7a5a2a";ctx.font=`700 36px ${FONT}`;ctx.fillText(T.litem[JA?0:1]+"："+tx(r.it),W/2,y);y+=60;ctx.fillText(T.lcolor[JA?0:1]+"："+tx(r.co),W/2,y);y+=80;
+  ctx.fillStyle="#fff";ctx.font=`700 34px ${FONT}`;ctx.fillText("MIRATERIA  ／  Instagram @mirateria.project",W/2,h-80);return y};
+ const need=draw2(2400);draw2(Math.max(need+140,1600));shareCanvas(cv,"shichan-uranai.png")};
+$("bShot").onclick=async()=>{const W=1080,cv=document.createElement("canvas"),ctx=cv.getContext("2d");
+ const imgs=await Promise.all(["guide",...F.map(f=>f.img),"logo"].map(n=>loadImg(`img/${n}.webp`)));
+ const rows=Math.ceil(F.length/2),cardH=420,h=200+300+300+rows*(cardH+30)+200;cv.width=W;cv.height=h;bg(ctx,W,h);ctx.textBaseline="top";ctx.textAlign="center";
+ ctx.fillStyle="#fff";ctx.font=`900 80px ${FONT}`;ctx.fillText(T.title[JA?0:1],W/2,50);ctx.fillStyle="#ffd23f";ctx.font=`700 36px ${FONT}`;ctx.fillText(T.sub[JA?0:1],W/2,145);
+ let y=210;if(imgs[0])ctx.drawImage(imgs[0],60,y,260,260*imgs[0].height/imgs[0].width);ctx.fillStyle="#fff";rr(ctx,350,y+40,W-410,180,40);ctx.fill();ctx.fillStyle="#2b1d0e";ctx.textAlign="left";ctx.font=`700 38px ${FONT}`;wrap(ctx,T.welcome[JA?0:1],380,y+70,W-470,52);
+ y+=300;ctx.textAlign="center";ctx.fillStyle="#4a4a4f";rr(ctx,40,y,W-80,260,30);ctx.fill();const lg=imgs[imgs.length-1];if(lg){const lw=W-140,lh=Math.min(170,lw*lg.height/lg.width);ctx.drawImage(lg,(W-lw*lh/(lw*lg.height/lg.width))/2,y+20,lw*lh/(lw*lg.height/lg.width),lh)}ctx.fillStyle="#fff";ctx.font=`600 30px ${FONT}`;ctx.fillText(T.addr[JA?0:1],W/2,y+205);
+ y+=300;F.forEach((f,i)=>{const x=40+(i%2)*((W-100)/2+20),cy=y+Math.floor(i/2)*(cardH+30),cw=(W-100)/2;ctx.fillStyle="#fff6d8";rr(ctx,x,cy,cw,cardH,40);ctx.fill();ctx.lineWidth=6;ctx.strokeStyle="#ffd23f";ctx.stroke();const im=imgs[i+1];if(im){const ih=280,iw=ih*im.width/im.height;ctx.drawImage(im,x+(cw-iw)/2,cy+20,iw,ih)}ctx.fillStyle="#2b1d0e";ctx.font=`800 40px ${FONT}`;ctx.fillText(JA?f.j:f.e,x+cw/2,cy+315);ctx.fillStyle="#7a5a2a";ctx.font=`600 28px ${FONT}`;ctx.fillText(JA?f.dj:f.de,x+cw/2,cy+368)});
+ ctx.fillStyle="#fff";ctx.font=`700 32px ${FONT}`;ctx.fillText("Version "+VERSION+"  ／  MIRATERIA  ／  @mirateria.project",W/2,h-110);shareCanvas(cv,"shichan-uranai-home.png")};
+
+/* ===== modals / links ===== */
+document.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>b.closest(".modal").classList.remove("on"));
+$("bHow").onclick=()=>$("mHow").classList.add("on");
+$("bInsta").onclick=$("b100insta").onclick=()=>window.open(INSTA,"_blank");
+$("bHist").onclick=()=>{const ul=$("histList");ul.innerHTML="";const list=HIST.slice(-30).reverse();
+ if(!list.length)ul.innerHTML=`<li>${L("まだありません","Nothing yet")}</li>`;
+ list.forEach(h=>{const f=F.find(x=>x.id===h.f),l=LV.find(x=>x.k===h.k);if(!f||!l)return;const d=new Date(h.t);
+  ul.insertAdjacentHTML("beforeend",`<li><b style="color:${l.c}">${lvName(l)}</b><span>${JA?f.j:f.e}<br><small>${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2,"0")}</small></span></li>`)});
+ $("mHist").classList.add("on")};
+$("notice").onclick=()=>{$("notice").classList.remove("on");store.set("uranai_notice",1)};
+
+/* first launch notice / 100th launch thanks (counted only on this phone) */
+(function(){let n=store.get("uranai_launch",0)+1;store.set("uranai_launch",n);
+ if(!store.get("uranai_notice",0))$("notice").classList.add("on");
+ else if(n>=100&&!store.get("uranai_100",0)){store.set("uranai_100",1);$("m100").classList.add("on")}})();
+
+/* ===== offline + auto update ===== */
+if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js").then(r=>{r.update();setInterval(()=>r.update(),30*60*1000)}).catch(()=>{});
+ let reloaded=false;navigator.serviceWorker.addEventListener("controllerchange",()=>{if(reloaded)return;reloaded=true;if(!$("play").classList.contains("on"))location.reload()})}
+</script>
+</body>
+</html>
